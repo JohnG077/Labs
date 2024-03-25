@@ -18,8 +18,6 @@ void *eleva(void *args) {
 	for (int i = thread_args->inicio; i <= thread_args->fim; i++)
 		vetor[i] *= vetor[i];
 	
-	//free(args);
-	
 	pthread_exit(NULL);
 }
 
