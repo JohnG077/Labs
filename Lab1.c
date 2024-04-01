@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 	if (argc != 3 || atoi(argv[1]) > atoi(argv[2]))
 	{
 		printf("ERRO! Digite \"%s <M> <N>\"\nM = numero de threads\tN = numero de valores no vetor\nOBS.: M <= N\n\n", argv[0]);
-	exit(-1);
+		exit(-1);
 	}
 	
 	int M = atoi(argv[1]), N = atoi(argv[2]);
@@ -71,8 +71,7 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < M; i++)
 	{
 		end = start + intervalo - 1 + (i < resto ? 1 : 0);
-		/*
-			Como temos M threads para N valores e todas as threads devem
+		/*	Como temos M threads para N valores e todas as threads devem
 			ser usadas, M <= N, mas podemos ter valores que não são 
 			divisíveis entre si, por exemplo, M = 7 e N = 9. 
 			
@@ -86,8 +85,8 @@ int main(int argc, char* argv[])
 			resto, já que o i vai de 0 até resto-1).
 			
 			Já o "start + intervalo - 1" é subtraido por 1 para impedir 
-			que ultrapasse o limite do array
-		*/
+			que ultrapasse o limite do array	
+   		*/
 		
 		vals[i].idThread = i+1;
 		vals[i].inicio = start;
