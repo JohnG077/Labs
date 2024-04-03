@@ -8,52 +8,51 @@ float *vetor; //vetor de entrada
 
 //define o tipo de dado de entrada das threads
 typedef struct {
-   	int id; //id da thread
-   	long int tamBloco; //tamanho do bloco (cada thread processa um bloco)
-	float soma;
+   int id; //id da thread
+   long int tamBloco; //tamanho do bloco (cada thread processa um bloco)
 } tArgs;
+
 
 //fluxo das threads
 void * tarefa(void * arg) {
    tArgs *args = (tArgs *) arg; 
    
-   char comando[100];
-   snprintf(comando, sizeof(comando), "./%s %ld", PROGRAM_NAME, args->tamBloco);
-   FILE *pipe = popen(comando, "r");
-   if (pipe == NULL){
-   	printf("Erro ao chamar o programa auxiliar.\n");
-   	exit(1);
-   }
+   float *somaLocal = (float *) malloc (sizeof(float));
    
-   // Pega os valores gerados pelo programa auxiliar e os soma
-   while (fscanf(pipe, "%f", vetor) == 1) {args->soma += *vetor;}
+   long int ini = args->id * args->tamBloco; //elemento inicial do bloco da thread
+   long int fim = ini + args->tamBloco; //elemento final(nao processado) do bloco da thread   
    
-   // Fecha o pipe
-   pclose(pipe);
 
+   for (long int i = ini; i < fim; i++)
+   {
+   	*somaLocal += vetor[i];
+   }	
+	printf("%f ", *somaLocal);
+	
    //retorna o resultado da soma local
-   pthread_exit((void *) vetor); 
+   pthread_exit((void *) somaLocal); 
 }
 
 //fluxo principal
 int main(int argc, char *argv[]) {
+   long int dim; //dimensao do vetor de entrada
+   long int tamBloco; //tamanho do bloco de cada thread 
+   int nthreads; //numero de threads que serao criadas
+
+   pthread_t *tid; //vetor de identificadores das threads no sistema
+   float *retorno; //valor de retorno das threads
+   float total = 0.0;	   // valor total de todos os elementos do vetor
+
+
+   //recebe e valida os parametros de entrada (dimensao do vetor, numero de threads)
    if(argc != 2) {
        fprintf(stderr, "Digite: %s <numero threads>\n", argv[0]);
        return 1; 
    }
-   
-   
-   long int dim; //dimensao do vetor de entrada
-   long int tamBloco; //tamanho do bloco de cada thread 
-   int nthreads = atoi(argv[1]); //numero de threads que serao criadas
-
-   pthread_t *tid; //vetor de identificadores das threads no sistema
-
-   //recebe e valida os parametros de entrada (dimensao do vetor, numero de threads)
+   nthreads = atoi(argv[1]);
    printf("nthreads=%d\n", nthreads); 
 
    //carrega o vetor de entrada
-   printf("Dimensao do vetor: ");
    scanf("%ld", &dim); //primeiro pergunta a dimensao do vetor
    printf("dim=%ld\n", dim); 
 
@@ -63,7 +62,9 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "ERRO--malloc\n");
       return 2;
    }
-
+   //preenche o vetor de entrada
+   for(long int i=0; i<dim; i++)
+      scanf("%f", &vetor[i]);
 
    //cria as threads
    tid = (pthread_t *) malloc(sizeof(pthread_t) * nthreads);
@@ -72,9 +73,9 @@ int main(int argc, char *argv[]) {
       return 3;
    }
    tamBloco = dim/nthreads;  //tamanho do bloco de cada thread 
-   if(!tamBloco) 
+   if(!tamBloco) // se dim/nthreads < 1 (isto é, se nthreads > dim), faz sequencial
       printf("\nA quantidade de threads eh maior que a quantidade de elementos, a execucao sera sequencial!\n");
-   	for(int i=0; i<nthreads; i++) {
+   for(int i=0; i<nthreads; i++) {
        //aloca e preenche argumentos para thread
        tArgs *args = (tArgs*) malloc(sizeof(tArgs));
        if (args == NULL) {
@@ -83,40 +84,35 @@ int main(int argc, char *argv[]) {
        }
        args->id = i; 
        args->tamBloco = tamBloco; 
-       if(pthread_create(tid+i, NULL, tarefa, (void*) args)){
+       if(pthread_create(tid+i, NULL, tarefa, (void*) args)){	// se != 0, dá erro (retornar 0 indica que funcionou)
           fprintf(stderr, "ERRO--pthread_create\n");
           return 5;
        }
-	}
-	
-   float sumtot = 0;
+   }
    
    //processa a parte final do vetor
-   if(dim%nthreads) {	// Se dim não é divisível por nthreads
-   		puts("\nAdicionando tarefas no Main\n");
-        		// Fazer soma sequencial
-   		char comando[100];
-   		snprintf(comando, sizeof(comando), "./%s %ld", PROGRAM_NAME, (dim%nthreads));
-   		FILE *pipe = popen(comando, "r");
-   		if (pipe == NULL){
-   			printf("Erro ao chamar o programa auxiliar.\n");
-   			exit(1);
-   		}
-   		
-   		while (fscanf(pipe, "%f", vetor) == 1) {sumtot += *vetor;}
-   		pclose(pipe);
-	} 
+   float soma = 0.0;	// Pega a soma da parte que ficou no Main
+   if(dim%nthreads) {
+      puts("\nMain com tarefa");
+      for(long int i=dim-(dim%nthreads); i<dim; i++) {
+          soma += vetor[i];
+      }
+      printf("%f ", soma);
+   } 
 
    //aguarda o termino das threads
    for(int i=0; i<nthreads; i++) {
-      if(pthread_join(*(tid+i), (void**) &sumtot)){
+      if(pthread_join(*(tid+i), (void**) &retorno)){
          fprintf(stderr, "ERRO--pthread_create\n");
          return 6;
       }
+      
+      total += *retorno;
    }
+	
+   total += soma;
 
-   // Exibe os resultados
-   printf("\nSoma: %f\n", sumtot);
+   printf("\ntotal: %f\n", total);
 
    //libera as areas de memoria alocadas
    free(vetor);
