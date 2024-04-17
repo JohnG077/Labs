@@ -67,8 +67,8 @@ void chama_arquivo(char * arq, int linha, int coluna, float * mat)
 //fluxo principal
 int main(int argc, char* argv[]) {
    float *saida; //matriz que salvará a multiplicação das matrizes
-   int lin1, col1; //dimensoes da matriz 1
-   int lin2, col2; //dimensoes da matriz 2
+   int lin1=0, col1=0; //dimensoes da matriz 1
+   int lin2=0, col2=0; //dimensoes da matriz 2
 
    double inicio, fim, delta;
    
@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
    //inicializacao das estruturas de dados da matriz de saida
    for(int i = 0; i < L; i++) {
       for(int j = 0; j < C; j++)
-         saida[i] = 0.0;
+         saida[i*C+j] = 0.0;	// É o mesmo que saida[i][j]
    }
    
    GET_TIME(fim);
@@ -123,13 +123,14 @@ int main(int argc, char* argv[]) {
 	
 	for (int i = 0; i < L; i++){
 		for (int j = 0; j < C; j++){
-			for (int k = 0; k < N; k++)
-				saida[i*L+j] += mat1[i*N+k] * mat2[k*C+j];
+			for (int k = 0; k < N; k++){
+				saida[i*C+j] += mat1[i*N+k] * mat2[k*C+j];
 				// É igual a saida[i][j] += mat1[i][k] * mat2[k][j]
+			}
 		}
 	}
 
-   GET_TIME(fim)   
+   GET_TIME(fim);
    delta = fim - inicio;
    printf("Tempo multiplicacao: %lf\n", delta);
 
@@ -138,7 +139,7 @@ int main(int argc, char* argv[]) {
    free(mat1);
    free(mat2);
    free(saida);
-   GET_TIME(fim)   
+   GET_TIME(fim);  
    delta = fim - inicio;
    printf("Tempo finalizacao:%lf\n", delta);
    return 0;

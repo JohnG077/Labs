@@ -87,8 +87,8 @@ void chama_arquivo(char * arq, int linha, int coluna, float * mat)
 //fluxo principal
 int main(int argc, char* argv[]) {
    float *saida; //matriz que salvará a multiplicação das matrizes
-   int lin1, col1; //dimensoes da matriz 1
-   int lin2, col2; //dimensoes da matriz 2
+   int lin1=0, col1=0; //dimensoes da matriz 1
+   int lin2=0, col2=0; //dimensoes da matriz 2
    
    pthread_t *tid; //identificadores das threads no sistema
    tArgs *args; //identificadores locais das threads e dimensao
@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
    for(int i=0; i<nthreads; i++) {
       pthread_join(*(tid+i), NULL);
    }
-   GET_TIME(fim)   
+   GET_TIME(fim);
    delta = fim - inicio;
    printf("Tempo multiplicacao: %lf\n", delta);
 
@@ -175,7 +175,7 @@ int main(int argc, char* argv[]) {
    free(saida);
    free(args);
    free(tid);
-   GET_TIME(fim)   
+   GET_TIME(fim);   
    delta = fim - inicio;
    printf("Tempo finalizacao:%lf\n", delta);
 
